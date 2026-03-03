@@ -20,9 +20,41 @@ RAD = 180./pi;
 SearchRadius = 10;  % [arcsec]
 
 Nsn = size(Tsn,1);
+tic;
 for Isn=1:1:Nsn
-    [Catradio, ColRadio] = catsHTM.cone_search('VLASS', Tsn.ra(Isn)./RAD, Tsn.dec(Isn)./RAD, SearchRadius);
+    [CatRadio, ColRadio, ~, Dist] = catsHTM.cone_search('VLASSep1', Tsn.ra(Isn)./RAD, Tsn.declination(Isn)./RAD, SearchRadius);
+     
     if Isn==1
-        Ncol = numel(Colradio);
-        MatchedRatio = 
+        Ncol = numel(ColRadio);
+        MatchedRadio = nan(Nsn, Ncol);
+        MatchedDist  = [nan(Nsn, 1), zeros(Nsn,1)];
+    end
+    if ~isempty(CatRadio)
+        Dist = Dist.* RAD.*3600;
+        [MinDist, Imin] = min(Dist);
+        CatRadio = CatRadio(Imin,:);
+
+        MatchedRadio(Isn,:) = CatRadio;
+        MatchedDist(Isn,:)  = [MinDist, numel(Dist)];
+    end
 end
+toc
+
+%%
+% select radio point sources
+Fps = ~isnan(MatchedRadio(:,5)) & MatchedRadio(:,5)./MatchedRadio(:,7)<(1+3.* MatchedRadio(:,6));
+
+% select clear associations (<1"):
+Fd=MatchedDist(:,1)<1; 
+
+% redshift
+Fz = Tsn.redshift<0.1;
+
+% discovered prior to 2017 (VLASS epoch 1):
+Ftime = Tsn.discoverydate.Year<2017;
+
+FF = Fps & Fd & Fz & Ftime;
+sum(FF)
+
+% all are Ic-BL !
+Tsn.type(FF)          
