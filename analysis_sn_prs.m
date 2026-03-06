@@ -8,6 +8,9 @@ R=imUtil.cat.match2Galaxies(TNS.ra,TNS.declination);
 
 TNS = tools.table.addStructFields2TableCols(TNS, R);
     
+Z = tools.array.selectFirstNotNaN(TNS.redshift, TNS.Z_PGC, TNS.Z_GLADE);
+
+TNS.Z = Z;
 
 %% save table
 save -v7.3 TNS.mat TNS
@@ -20,21 +23,23 @@ load TNS.mat;
 
 %%
 
-FlagZ=Tsn.redshift<0.1; %06;    
-Tsn=Tsn(FlagZ,:);
+FlagZ=~isnan(TNS.Z); % <0.1; %06;    
+TNS=TNS(FlagZ,:);
 
-% 17,397
+% 17,397 (before adding Z) with z<0.1
+% 53,266 (after adding Z) with z<0.1
+% 98,676 non-nan Z
 
 %%
 RAD = 180./pi;
 
 SearchRadius = 10;  % [arcsec]
 
-Nsn = size(Tsn,1);
+Nsn = size(TNS,1);
 tic;
 for Isn=1:1:Nsn
 	  [Isn, Nsn]
-    [CatRadio, ColRadio, ~, Dist] = catsHTM.cone_search('VLASSep1', Tsn.ra(Isn)./RAD, Tsn.declination(Isn)./RAD, SearchRadius);
+    [CatRadio, ColRadio, ~, Dist] = catsHTM.cone_search('VLASSep1', TNS.ra(Isn)./RAD, TNS.declination(Isn)./RAD, SearchRadius);
      
     if Isn==1
         Ncol = numel(ColRadio);
@@ -52,30 +57,54 @@ for Isn=1:1:Nsn
 end
 toc
 
-    % 773 matches, 677 unique matches 
+save -v7.3 Matched.mat MatchedRadio MatchedDist
+% 1343 unique matches
 
     
 %%
 % select radio point sources
 Fps = ~isnan(MatchedRadio(:,5)) & MatchedRadio(:,5)./MatchedRadio(:,7)<(1+3.* MatchedRadio(:,6));
+% only 3079/98676 are point sources
 
-% 511 left
+sum(Fps)
+% 3079 left
 
 % select clear associations (<1"):
 Fd=MatchedDist(:,1)<1; 
+% 1343 unique matches
 
 % redshift
-Fz = Tsn.redshift<0.1;
+Fz = TNS.Z<0.1;
+% 53,266 matches
 
 % discovered prior to 2017 (VLASS epoch 1):
-Ftime = Tsn.discoverydate.Year<2017;
+Ftime = TNS.discoverydate.Year<2017;
+% 3973 matches
 
 FF = Fps & Fd & Fz & Ftime;
 sum(FF)
+% 14 matches
 
 % all are Ic-BL !
-Tsn.type(FF)          
-Tsn.name(FF)
+TNS.type(FF)          
+TNS.name(FF)
+% old (all Ic-BL)
 %    "2016gox"
 %    "2016coi"
+
+%% NEW
+    ["2016gox"
+    "2012iz"
+    "2014fe"
+    "2016irx"
+    "2016hhl"
+    "2016gzi"
+    "2016gpx"
+    "2016gpw"
+    "2016gpu"
+    "2016gcj"
+    "2016fpf"
+    "2016fpc"
+    "2016emu"
+    "2016coi"]
 
