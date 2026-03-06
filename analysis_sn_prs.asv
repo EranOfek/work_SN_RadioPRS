@@ -1,18 +1,29 @@
 %%
 
-% downloaded on 7-Jan-2026
-[Tsn]=VO.TNS.downloadAll;
+% downloaded on 3-Mar-2026
+[TNS]=VO.TNS.downloadAll;
 
-save -v7.3 Tsn.mat Tsn
+%% add redshifts
+R=imUtil.cat.match2Galaxies(TNS.ra,TNS.declination);
+
+TNS = tools.table.addStructFields2TableCols(TNS, R);
+    
+
+%% save table
+save -v7.3 TNS.mat TNS
+
+% 190,740
+  
+%%
+
+load TNS.mat;
 
 %%
 
-load Tsn.mat;
+FlagZ=Tsn.redshift<0.1; %06;    
+Tsn=Tsn(FlagZ,:);
 
-%%
-
-%FlagZ=Tsn.redshift<0.06;    
-%Tsn=Tsn(FlagZ,:);
+% 17,397
 
 %%
 RAD = 180./pi;
@@ -22,6 +33,7 @@ SearchRadius = 10;  % [arcsec]
 Nsn = size(Tsn,1);
 tic;
 for Isn=1:1:Nsn
+	  [Isn, Nsn]
     [CatRadio, ColRadio, ~, Dist] = catsHTM.cone_search('VLASSep1', Tsn.ra(Isn)./RAD, Tsn.declination(Isn)./RAD, SearchRadius);
      
     if Isn==1
@@ -40,9 +52,14 @@ for Isn=1:1:Nsn
 end
 toc
 
+    % 773 matches, 677 unique matches 
+
+    
 %%
 % select radio point sources
 Fps = ~isnan(MatchedRadio(:,5)) & MatchedRadio(:,5)./MatchedRadio(:,7)<(1+3.* MatchedRadio(:,6));
+
+% 511 left
 
 % select clear associations (<1"):
 Fd=MatchedDist(:,1)<1; 
@@ -58,3 +75,7 @@ sum(FF)
 
 % all are Ic-BL !
 Tsn.type(FF)          
+Tsn.name(FF)
+%    "2016gox"
+%    "2016coi"
+

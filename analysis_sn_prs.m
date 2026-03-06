@@ -1,15 +1,22 @@
 %%
 
-% downloaded on 3-Mar-2026
-[Tsn]=VO.TNS.downloadAll;
+% downloaded on 6-Mar-2026
+[TNS]=VO.TNS.downloadAll;
 
-save -v7.3 Tsn.mat Tsn
+%% add redshifts
+R=imUtil.cat.match2Galaxies(TNS.ra,TNS.declination);
+
+TNS = tools.table.addStructFields2TableCols(TNS, R);
+    
+
+%% save table
+save -v7.3 TNS.mat TNS
 
 % 190,740
   
 %%
 
-load Tsn.mat;
+load TNS.mat;
 
 %%
 
