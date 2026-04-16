@@ -92,7 +92,6 @@ sum(MatchedDist(:,1)<1)
 TNS.VLASS_Ftot = MatchedRadio(:,5);
 TNS.VLASS_Fpeak= MatchedRadio(:,7);
 TNS.VLASS_ErrFpeak = MatchedRadio(:,8);
-TNS.VLASS_Dist     = MatchedDist(:,1);
 Fps = ~isnan(MatchedRadio(:,5)) & MatchedRadio(:,5)< (MatchedRadio(:,7) + 3.* sqrt(MatchedRadio(:,6).^2 + MatchedRadio(:,8).^2));
 Compactness = MatchedRadio(:,5) ./ (MatchedRadio(:,7) + 3.* sqrt(MatchedRadio(:,6).^2 + MatchedRadio(:,8).^2)); % compact are <1
 
@@ -199,8 +198,7 @@ print RadioCompactness_Tran.eps -depsc2
 
 %%
 TNS_FF   = TNS(FF,:);
-TNS_FF   = sortrows(TNS_FF, {'VLASS_Dist'});
 
-Selected = TNS_FF(:,{'name','type','ra','declination','Z','discoverymag','internal_names','disc_abs_mag', 'VLASS_Fpeak', 'VLASS_ErrFpeak', 'VLASS_Dist'});
-tools.table.sprintf_table(Selected,'Format',{'%-7s','%-9s','%10.6f','%10.6f','%6.4f','%4.1f','%-35s','%6.1f', '%6.1f', '%6.1f', '%3.1f'},'IsLatex',true)
+Selected = TNS(FF,{'name','type','ra','declination','Z','discoverymag','internal_names','disc_abs_mag', 'VLASS_Fpeak', 'VLASS_ErrFpeak'});
+tools.table.sprintf_table(Selected,'Format',{'%-7s','%-9s','%10.6f','%10.6f','%6.4f','%4.1f','%-35s','%6.1f', '%6.1f', '%6.1f'},'IsLatex',true)
 
