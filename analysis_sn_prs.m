@@ -165,12 +165,10 @@ Fz = TNS.Z<0.1;
 Ftime = TNS.discoverydate.Year<2017;
 % 3973 matches (with Z) / 7588 (all)
 
-<<<<<<< HEAD
-Fprs = Fps & Fd & Fz & Ftime;
-sum(Fprs)
+%Fprs = Fps & Fd & Fz & Ftime;
+%sum(Fprs)
 % 10 matches
 
-=======
 FF = C<2 & Fd & Fz & Ftime;
 sum(FF)
 % 10 matches
@@ -187,7 +185,6 @@ s
 % old (all Ic-BL)
 %    "2016gox"
 %    "2016coi"
->>>>>>> 638003624cf155df45634d4a44e2a9fc3449887c
 
 % abs mag:
 TNS.disc_abs_mag = TNS.discoverymag - (5.*log10(astro.cosmo.lum_dist(TNS.Z))-5);
@@ -196,7 +193,6 @@ TNS.disc_abs_mag = TNS.discoverymag - (5.*log10(astro.cosmo.lum_dist(TNS.Z))-5);
 
 save -v7.3 TNS_Selected.mat TNS
 
-<<<<<<< HEAD
 %%
 
 Selected = TNS(Fprs,{'name','type','ra','declination','Z','discoverymag','internal_names','disc_abs_mag'});
@@ -314,7 +310,8 @@ end
 % for each SN in list TNS - calc its Dist:
 DistTNS = astro.cosmo.lum_dist(TNS.Z).*constant.pc;  % [cm]
 Dist = astro.cosmo.lum_dist(Xz).*constant.pc;
-=======
+
+
 %% plot distance distribution
 
 EdgesDist = (0:0.25:10);
@@ -430,5 +427,4 @@ TNS_FF.nuFnu = 3e9.*TNS_FF.VLASS_Fpeak.*4.*pi.*(astro.cosmo.lum_dist(TNS_FF.Z).*
 
 Selected = TNS_FF(:,{'name','type','ra','declination','Z','discoverymag','disc_abs_mag', 'VLASS_Fpeak', 'VLASS_ErrFpeak', 'VLASS_Dist', 'nuFnu', 'NVSS', 'FIRST','EROSITA'});
 tools.table.sprintf_table(Selected,'Format',{'%-7s','%-9s','%10.6f','%10.6f','%6.4f','%4.1f','%6.1f', '%6.1f', '%6.1f', '%3.1f', '%5.1e', '%5.1f', '%5.1f', '%4.1e'},'IsLatex',true, 'NoData',true)
->>>>>>> 638003624cf155df45634d4a44e2a9fc3449887c
 
