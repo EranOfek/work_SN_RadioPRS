@@ -1,6 +1,6 @@
 %%
 
-% downloaded on 6-Mar-2026
+% downloaded on 1-May-2026
 [TNS]=VO.TNS.downloadAll;
 size(TNS,1)
 % 190,894
@@ -11,7 +11,7 @@ TNS = TNS(:,ColNames);
 TNS.Origin = zeros(size(TNS,1),1);
 
 
-% merge with TNS_old
+% merge with TNS_old <-- problem with declination!
 load('TNS_old.mat'); % Load the old TNS data
 
 TNS_old = TNS_old(:,{'ID','Name','RA','DEC','Obj_Type','Redshift','DiscoveryMag_Flux','DiscoveryDate_UT_'});
@@ -28,7 +28,7 @@ TNS = [TNS;TNS_old];
 FF= TNS.type~="FRB";
 TNS = TNS(FF,:);
 size(TNS,1)
-% left with 185,845
+% left with 195,679
 
 %% add redshifts
 R=imUtil.cat.match2Galaxies(TNS.ra,TNS.declination);
