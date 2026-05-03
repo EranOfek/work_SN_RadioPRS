@@ -1,52 +1,40 @@
 %%
 
-% downloaded on 1-May-2026
-[TNS]=VO.TNS.downloadAll;
+% downloaded on 3-May-2026  07:55 UTC
+[TNS]=VO.TNS.downloadAll('AddOld',true);
 size(TNS,1)
-% 190,894
+% 200,855
 
-ColNames = {'objid','name','ra','declination','type','redshift','discoverymag','discoverydate'};
-
-TNS = TNS(:,ColNames);
-TNS.Origin = zeros(size(TNS,1),1);
+%% save table
+save -v7.3 TNS_All.mat TNS
 
 
-% merge with TNS_old <-- problem with declination!
-load('TNS_old.mat'); % Load the old TNS data
-
-TNS_old = TNS_old(:,{'ID','Name','RA','DEC','Obj_Type','Redshift','DiscoveryMag_Flux','DiscoveryDate_UT_'});
-TNS_old.Properties.VariableNames = ColNames;
-TNS_old.Origin = ones(size(TNS_old,1),1);
-
-TNS = [TNS;TNS_old];
-
-
-
-
-% 7-3-2026 (17:18)
-% remove FRBs
+%% remove FRBs
 FF= TNS.type~="FRB";
 TNS = TNS(FF,:);
 size(TNS,1)
-% left with 195,679
+% left with 195,747
+
+%% save table
+save -v7.3 TNS_NoFRB.mat TNS
 
 %% add redshifts
 R=imUtil.cat.match2Galaxies(TNS.ra,TNS.declination);
 
 TNS = tools.table.addStructFields2TableCols(TNS, R);
-    
+
 Z = tools.array.selectFirstNotNaN(TNS.redshift, TNS.Z_PGC, TNS.Z_GLADE);
 
 TNS.Z = Z;
 
 %% save table
-save -v7.3 TNS.mat TNS
+save -v7.3 TNS_withZ.mat TNS
 
 
   
 %%
 
-load TNS.mat;
+load TNS_withZ.mat;
 
 
 
@@ -63,7 +51,7 @@ fclose(FID);
 % Skip this, since we are interested in all events
 
 FlagZ=~isnan(TNS.Z); % <0.1; %06;    
-TNS=TNS(FlagZ,:);
+TNSz=TNS(FlagZ,:);
 
 % 17,397 (before adding Z) with z<0.1
 % 53,266 (after adding Z) with z<0.1
@@ -102,7 +90,6 @@ toc
 save -v7.3 Matched.mat MatchedRadio MatchedDist
 
 sum(MatchedDist(:,1)<1)
-% 1342 unique matches (with Z) ie 2420 (w and w/o Z)
 
     
 %%
@@ -115,7 +102,7 @@ Fps = ~isnan(MatchedRadio(:,5)) & MatchedRadio(:,5)< (MatchedRadio(:,7) + 3.* sq
 % old compactness
 Compactness = MatchedRadio(:,5) ./ (MatchedRadio(:,7) + 3.* sqrt(MatchedRadio(:,6).^2 + MatchedRadio(:,8).^2)); % compact are <1
 
-% new compactness
+% new compactness (C)
 
 % for all VLASS
 F_total = VLASS.Table.Ftot;
@@ -141,29 +128,29 @@ C = ((F_total./F_peak) - 1) ./ ...
 TNS.Compactness = C;
 
 
-% 2236 selected (with Z) / 2912 (all) 
 
 
 % select clear associations (<1"):
 Fd=MatchedDist(:,1)<1; 
-% 1343 unique matches (with Z) / 2420 (all)
 
 
 %VLASS = cats.radio.VLASS1;
 %FPS=~isnan(VLASS.Table.Ftot) & VLASS.Table.Ftot<(VLASS.Table.Fpeak + 3.*sqrt(VLASS.Table.ErrFtot.^2 + VLASS.Table.ErrFpeak));
 %sum(FPS)./size(VLASS.Catalog,1)
 sum(CV<2)./size(VLASS.Catalog,1)
-% 41% are point sources (with Z) / 81% (all)
+% 41% are point sources 
 sum(C<2 & Fd)./sum(Fd)
 % 37%
 
 % redshift
 Fz = TNS.Z<0.1;
-% 53,266 matches
+% 57,346 matches
 
 % discovered prior to 2017 (VLASS epoch 1):
-Ftime = TNS.discoverydate.Year<2017;
-% 3973 matches (with Z) / 7588 (all)
+TNS.discoverydate_DateTime =   datetime(TNS.discoverydate);
+
+Ftime = TNS.discoverydate_DateTime.Year<2017;
+% 12,700 matches 
 
 %Fprs = Fps & Fd & Fz & Ftime;
 %sum(Fprs)
@@ -171,13 +158,21 @@ Ftime = TNS.discoverydate.Year<2017;
 
 FF = C<2 & Fd & Fz & Ftime;
 sum(FF)
-% 10 matches
+% 15 matches
 
-% we are interested in all events
-FF = Fd & Ftime;           
-sum(FF)
-% 86 matches (with 1.25'') / 120 with 3.3''
-s
+Fprs = MatchedDist(:,1)<1.0 & Ftime;
+sum(Fprs)
+% 95
+
+Fprs = MatchedDist(:,1)<3.3 & Ftime;
+sum(Fprs)
+% 176
+
+Fprs = MatchedDist(:,1)<3.3 & Ftime & C<2;
+sum(Fprs)
+% 68
+
+
 
 % all are Ic-BL !
 %TNS.type(FF)          
@@ -195,7 +190,7 @@ save -v7.3 TNS_Selected.mat TNS
 
 %%
 
-Selected = TNS(Fprs,{'name','type','ra','declination','Z','discoverymag','internal_names','disc_abs_mag'});
+%Selected = TNS(Fprs,{'name','type','ra','declination','Z','discoverymag','internal_names','disc_abs_mag'});
 Selected = TNS(Fprs,{'name','type','ra','declination','Z','discoverymag','disc_abs_mag'});
 
 % match to FIRST
@@ -237,16 +232,23 @@ Ind_Fprs = Ind_Fprs(~(~isnan(Selected.FIRST) | ~isnan(Selected.NVSS)))
 %% plots and rate
 
 % fraction of transients detected in 2016
-sum(TNS.discoverydate.Year==2016)./sum(TNS.discoverydate.Year<2017)
+sum(TNS.discoverydate_DateTime.Year==2016)./sum(TNS.discoverydate_DateTime.Year<2017)
 
 % z distribution of all TNS prior to 2017 and have z
-F=TNS.discoverydate.Year<2017;  
+F=TNS.discoverydate_DateTime.Year<2017;  
 %TNS=TNS(F,:);
 
-Zed=(0:0.01:1);
+Zed=(0:0.01:0.5);
 [Nz]=histcounts(TNS.Z(F),Zed);       
 Xz=(Zed(1:end-1)+Zed(2:end))./2;
 bar(Xz,Nz) 
+H=xlabel('z');
+H.FontSize = 18;
+H.Interpreter = 'latex';
+H=xlabel('N');
+H.FontSize = 18;
+H.Interpreter = 'latex';
+
 
 
 % compare the histogram of redshift with the transients with z distribution
@@ -425,6 +427,17 @@ end
 TNS_FF.EROSITA(TNS_FF.EROSITA == 0) = NaN;
 TNS_FF.nuFnu = 3e9.*TNS_FF.VLASS_Fpeak.*4.*pi.*(astro.cosmo.lum_dist(TNS_FF.Z).*constant.pc).^2 .*1e-26;
 
-Selected = TNS_FF(:,{'name','type','ra','declination','Z','discoverymag','disc_abs_mag', 'VLASS_Fpeak', 'VLASS_ErrFpeak', 'VLASS_Dist', 'nuFnu', 'NVSS', 'FIRST','EROSITA'});
+% sort by no FIRST/NVSS counterparts:
+F1 = TNS_FF.VLASS_Dist<=1;
+F1_1 = isnan(TNS_FF.NVSS) & isnan(TNS_FF.FIRST) & F1;
+F1_2 = (~isnan(TNS_FF.NVSS) | ~isnan(TNS_FF.FIRST)) & F1;
+F2_1 = isnan(TNS_FF.NVSS) & isnan(TNS_FF.FIRST) & ~F1;
+F2_2 = (~isnan(TNS_FF.NVSS) | ~isnan(TNS_FF.FIRST)) & ~F1;
+
+TNS_FF1 = [TNS_FF(F1_1,:); TNS_FF(F1_2,:); TNS_FF(F2_1,:); TNS_FF(F2_2,:)];
+
+%%
+
+Selected = TNS_FF1(:,{'name','type','ra','declination','Z','discoverymag','disc_abs_mag', 'VLASS_Fpeak', 'VLASS_ErrFpeak', 'VLASS_Dist', 'nuFnu', 'NVSS', 'FIRST','EROSITA'});
 tools.table.sprintf_table(Selected,'Format',{'%-7s','%-9s','%10.6f','%10.6f','%6.4f','%4.1f','%6.1f', '%6.1f', '%6.1f', '%3.1f', '%5.1e', '%5.1f', '%5.1f', '%4.1e'},'IsLatex',true, 'NoData',true)
 
